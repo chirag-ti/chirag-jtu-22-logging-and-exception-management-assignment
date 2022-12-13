@@ -17,9 +17,11 @@ async def reset_authkey(request: Request, token: str = Depends(get_token)):
     body = json.loads(body)
     provider, role = get_user_role(token)
     if role != "ADMIN" and (role != "3PL"):
+        logging.error("Invalid user")
         pass
     if role == "ADMIN":
         provider = body['3pl']
+    logging.info("Resetting authkey")
     apikey = db_helper_session.set_auth_key(username=provider)
     return {
         "status_code": HTTP_200_OK,
@@ -34,9 +36,11 @@ async def view_authkey(request: Request, token: str = Depends(get_token)):
     provider, role = get_user_role(token)
 
     if role != "ADMIN" and role != "3PL":
+        logging.error("Invalid user")
         pass
     if role == "ADMIN":
         provider = body['3pl']
+    logging.info("Viewing authkey")
     apikey = db_helper_session.get_auth_key(username=provider)
     return {
         "status_code": HTTP_200_OK,
