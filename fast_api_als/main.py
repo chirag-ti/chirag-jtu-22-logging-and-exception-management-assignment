@@ -3,6 +3,7 @@ import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fast_api_als.routers import users, submit_lead, lead_conversion, reinforcement, oem, three_pl, quicksight
+import logging
 
 app = FastAPI()
 app.include_router(users.router)
@@ -24,6 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logging.basicConfig(filename="fast_api_als.log", 
+                    filemode = "w", 
+                    format='%(asctime)s - %(levelname)s -  %(message)s', 
+                    level = logging.DEBUG)
 
 
 @app.get("/")

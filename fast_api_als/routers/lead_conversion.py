@@ -16,6 +16,7 @@ router = APIRouter()
 """
 write proper logging and exception handling
 """
+logger = logging.getLogger(__name__)
 
 def get_quicksight_data(lead_uuid, item):
     """
@@ -37,6 +38,7 @@ def get_quicksight_data(lead_uuid, item):
         "3pl": item.get('3pl', 'unknown'),
         "oem_responded": 1
     }
+    logger.info("Created the lead converted data for dumping into S3 for lead_uuid:{lead_uuid}")
     return data, f"{item['make']}/1_{int(time.time())}_{lead_uuid}"
 
 
@@ -47,7 +49,7 @@ async def submit(file: Request, token: str = Depends(get_token)):
 
     if 'lead_uuid' not in body or 'converted' not in body:
         # throw proper HTTPException
-        pass
+        raise HTTPException(status_code=404 , detail="lead_uuid or converted not available in body")
         
     lead_uuid = body['lead_uuid']
     converted = body['converted']
@@ -55,7 +57,7 @@ async def submit(file: Request, token: str = Depends(get_token)):
     oem, role = get_user_role(token)
     if role != "OEM":
         # throw proper HTTPException
-        pass
+        raise HTTPException(status_code=401 , detail="Invalid Role")
 
     is_updated, item = db_helper_session.update_lead_conversion(lead_uuid, oem, converted)
     if is_updated:
@@ -67,4 +69,4 @@ async def submit(file: Request, token: str = Depends(get_token)):
         }
     else:
         # throw proper HTTPException
-        pass
+        raise HTTPException(status_code=400 , detail="Failed to update lead conversion status")

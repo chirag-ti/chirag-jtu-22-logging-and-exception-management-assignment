@@ -12,6 +12,8 @@ from fast_api_als.constants import (
 How can you write log to understand what's happening in the code?
 You also trying to undderstand the execution time factor.
 """
+logger = logging.getLogger(__name__)
+zero_time = time.time()
 
 async def call_validation_service(url: str, topic: str, value: str, data: dict) -> None:  # 2
     if value == '':
@@ -21,6 +23,7 @@ async def call_validation_service(url: str, topic: str, value: str, data: dict) 
 
     r = response.json()
     data[topic] = r
+    logger.info(f'Called validation_services | time of execution is {time.time() - zero_time}')
     
 
 async def verify_phone_and_email(email: str, phone_number: str) -> bool:
@@ -44,8 +47,14 @@ async def verify_phone_and_email(email: str, phone_number: str) -> bool:
     )
     if "email" in data:
         if data["email"]["DtResponse"]["Result"][0]["StatusCode"] in ("0", "1"):
+            logger.info(f"Email:{email} is verified | time of execution is {time.time() - zero_time}")
             email_valid = True
+        else:
+            logger.error(f"Invalid email:{email} | time of execution is {time.time() - zero_time}")
     if "phone" in data:
         if data["phone"]["DtResponse"]["Result"][0]["IsValid"] == "True":
+            logger.info(f"Phone:{phone_number} is verified | time of execution is {time.time() - zero_time}")
             phone_valid = True
+        else:
+            logger.error(f"Invalid Phone_number:{phone_number} | time of execution is {time.time() - zero_time}")
     return email_valid | phone_valid
