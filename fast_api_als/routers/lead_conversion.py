@@ -16,6 +16,7 @@ router = APIRouter()
 """
 write proper logging and exception handling
 """
+logger = logging.getLogger(__name__)
 
 def get_quicksight_data(lead_uuid, item):
     """
@@ -37,7 +38,7 @@ def get_quicksight_data(lead_uuid, item):
         "3pl": item.get('3pl', 'unknown'),
         "oem_responded": 1
     }
-    logging.info("Created the lead converted data for dumping into S3 for lead_uuid:{lead_uuid}")
+    logger.info("Created the lead converted data for dumping into S3 for lead_uuid:{lead_uuid}")
     return data, f"{item['make']}/1_{int(time.time())}_{lead_uuid}"
 
 

@@ -11,6 +11,7 @@ regex = r'^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])
 match_iso8601 = re.compile(regex).match
 zipcode_search = SearchEngine()
 
+logger = logging.getLogger(__name__)
 
 def process_before_validating(input_json):
     if isinstance(input_json['adf']['prospect']['id'], dict):
@@ -43,7 +44,7 @@ def parse_xml(adf_xml):
         obj = xmltodict.parse(adf_xml)
         return obj
     except Exception as e:
-        logging.info(f'The adf_xml failed to be parsed')
+        logger.info(f'The adf_xml failed to be parsed')
         raise e
 
 
@@ -63,17 +64,17 @@ def validate_adf_values(input_json):
             last_name = True
 
     if not first_name or not last_name:
-        logging.error("Name is incomplete")
+        logger.error("Name is incomplete")
         return {"status": "REJECTED", "code": "6_MISSING_FIELD", "message": "name is incomplete"}
 
     if not email and not phone:
-        logging.error(f'Either phone or email is required')
+        logger.error(f'Either phone or email is required')
         return {"status": "REJECTED", "code": "6_MISSING_FIELD", "message": "either phone or email is required"}
 
     # zipcode validation
     res = zipcode_search.by_zipcode(zipcode)
     if not res:
-        logging.error(f'Invalid Postal Code')
+        logger.error(f'Invalid Postal Code')
         return {"status": "REJECTED", "code": "4_INVALID_ZIP", "message": "Invalid Postal Code"}
 
     # check for TCPA Consent
@@ -82,12 +83,12 @@ def validate_adf_values(input_json):
         if id['@source'] == 'TCPA_Consent' and id['#text'].lower() == 'yes':
             tcpa_consent = True
     if not email and not tcpa_consent:
-        logging.error(f'The contact method is missing TCPA consent')
+        logger.error(f'The contact method is missing TCPA consent')
         return {"status": "REJECTED", "code": "7_NO_CONSENT", "message": "Contact Method missing TCPA consent"}
 
     # request date in ISO8601 format
     if not validate_iso8601(input_json['requestdate']):
-        logging.error(f'The DateTime is not in ISO8601 format')
+        logger.error(f'The DateTime is not in ISO8601 format')
         return {"status": "REJECTED", "code": "3_INVALID_FIELD", "message": "Invalid DateTime"}
 
     return {"status": "OK"}
@@ -106,5 +107,5 @@ def check_validation(input_json):
             return False, response['code'], response['message']
         return True, "input validated", "validation_ok"
     except Exception as e:
-        logging.error(f"Validation failed: {e.message}")
+        logger.error(f"Validation failed: {e.message}")
         return False, "6_MISSING_FIELD", e.message
